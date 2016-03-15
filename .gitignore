@@ -32,6 +32,8 @@
 # "temporary" build files
 /target
 
+/out
+
 # intellij
 *.iml
 .idea
