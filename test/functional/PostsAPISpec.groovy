@@ -1,7 +1,6 @@
 import net.hedtech.restfulapi.spock.*
 
 import grails.converters.JSON
-import spock.lang.IgnoreRest
 import spock.lang.Unroll
 import constants.Headers
 import constants.ResponseStatus
@@ -125,6 +124,87 @@ class PostsAPISpec extends RestSpecification{
 
         where:
         userId << [1, 2, 3]
+    }
+
+    def "check that we can post a posts with the API"(String userId, String title, String text) {
+
+        when: "make a post request to the api"
+
+        post("${PATH}") {
+            headers[Headers.CONTENT_TYPE] = TestConfig.CONTENT_TYPE
+            headers[Headers.ACCEPT] = TestConfig.CONTENT_TYPE
+            body {
+                """
+                {
+                    "userId": "${userId}",
+                    "title": "${title}",
+                    "body": "${text}"
+                }
+                """
+            }
+        }
+
+        then: "a json is received with the desired data"
+
+        //Headers information assertion
+        response.status == ResponseStatus.POST_STATUS_OK
+        responseHeader(Headers.ACCESS_CONTROL_ALLOW_CREDENTIALS) == "true"
+        responseHeader(Headers.CONTENT_TYPE_OPTIONS) == "nosniff"
+        responseHeader(Headers.POWERED) == "Express"
+        responseHeader(Headers.SERVER) == "Cowboy"
+
+        //Json information assertion
+        def json = JSON.parse response.text
+        json.size() > 1
+        json.id != 0
+
+        where:
+
+        userId | title         | text
+        "1"    | "test_title1" | "test_body1"
+        "2"    | "test_title2" | "test_body2"
+        "3"    | "test_title3" | "test_body3"
+
+    }
+
+    def "check that we can edit posts with the API"(String postId, String title, String text) {
+
+        when: "make a put request to the api"
+
+        put("${PATH}/${postId}") {
+            headers[Headers.CONTENT_TYPE] = TestConfig.CONTENT_TYPE
+            headers[Headers.ACCEPT] = TestConfig.CONTENT_TYPE
+            body {
+                """
+                {
+                    "title": "${title}",
+                    "body": "${text}"
+                }
+                """
+            }
+        }
+
+        then: "a json is received with the desired data"
+
+        //Headers information assertions
+        response.status == ResponseStatus.GET_STATUS_OK
+        responseHeader(Headers.ACCESS_CONTROL_ALLOW_CREDENTIALS) == "true"
+        responseHeader(Headers.CONTENT_TYPE_OPTIONS) == "nosniff"
+        responseHeader(Headers.POWERED) == "Express"
+        responseHeader(Headers.SERVER) == "Cowboy"
+
+        //Json information assertion
+        def json = JSON.parse response.text
+        json.size() > 1
+        json.id == postId as int
+
+        where:
+
+        postId | title         | text
+        "1"    | "test_title1" | "test_body1"
+        "2"    | "test_title2" | "test_body2"
+        "3"    | "test_title3" | "test_body3"
+
     }
 
 }
